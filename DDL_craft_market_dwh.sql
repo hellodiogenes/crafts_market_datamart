@@ -1,6 +1,6 @@
 /* создание таблицы tmp_sources с данными из всех источников */
 DROP TABLE IF EXISTS tmp_sources;
-CREATE TEMP TABLE tmp_sources AS 
+CREATE TEMPORARY TABLE tmp_sources AS 
 SELECT  order_id,
         order_created_date,
         order_completion_date,
@@ -138,7 +138,7 @@ JOIN dwh.d_product dp ON dp.product_name = src.product_name and dp.product_descr
 
 /* обновление существующих записей и добавление новых в dwh.f_order */
 MERGE INTO dwh.f_order f
-USING tmp_sources_fact t
+USING #tmp_sources_fact t
 ON f.product_id = t.product_id AND f.craftsman_id = t.craftsman_id AND f.customer_id = t.customer_id AND f.order_created_date = t.order_created_date 
 WHEN MATCHED THEN
   UPDATE SET order_completion_date = t.order_completion_date, order_status = t.order_status, load_dttm = current_timestamp

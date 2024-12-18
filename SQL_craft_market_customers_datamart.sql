@@ -1,7 +1,9 @@
--- DDL витрины данных
-DROP TABLE IF EXISTS dwh.customer_report_datamart;
+--CREATE SCHEMA marts;
 
-CREATE TABLE IF NOT EXISTS dwh.customer_report_datamart (
+-- DDL витрины данных
+DROP TABLE IF EXISTS marts.customer_report_datamart;
+
+CREATE TABLE IF NOT EXISTS marts.customer_report_datamart (
     id BIGINT GENERATED ALWAYS AS IDENTITY NOT NULL, -- идентификатор записи
     customer_id BIGINT NOT NULL, -- идентификатор заказчика
     customer_name VARCHAR NOT NULL, -- Ф.И.О. заказчика
@@ -24,9 +26,9 @@ CREATE TABLE IF NOT EXISTS dwh.customer_report_datamart (
 );
 
 -- DDL таблицы инкрементальных загрузок
-DROP TABLE IF EXISTS dwh.load_dates_customer_report_datamart;
+DROP TABLE IF EXISTS marts.load_dates_customer_report_datamart;
 
-CREATE TABLE IF NOT EXISTS dwh.load_dates_customer_report_datamart (
+CREATE TABLE IF NOT EXISTS marts.load_dates_customer_report_datamart (
     id BIGINT GENERATED ALWAYS AS IDENTITY NOT NULL,
     load_dttm DATE NOT NULL,
     CONSTRAINT load_dates_customer_report_datamart_pk PRIMARY KEY (id)
@@ -57,11 +59,11 @@ dwh_delta AS ( -- определяем, какие данные были изм�
                 INNER JOIN dwh.d_craftsman dc ON fo.craftsman_id = dc.craftsman_id 
                 INNER JOIN dwh.d_customer dcs ON fo.customer_id = dcs.customer_id 
                 INNER JOIN dwh.d_product dp ON fo.product_id = dp.product_id 
-                LEFT JOIN dwh.customer_report_datamart crd ON dcs.customer_id = crd.customer_id
-                    WHERE (fo.load_dttm > (SELECT COALESCE(MAX(load_dttm),'1900-01-01') FROM dwh.load_dates_customer_report_datamart)) OR
-                            (dc.load_dttm > (SELECT COALESCE(MAX(load_dttm),'1900-01-01') FROM dwh.load_dates_customer_report_datamart)) OR
-                            (dcs.load_dttm > (SELECT COALESCE(MAX(load_dttm),'1900-01-01') FROM dwh.load_dates_customer_report_datamart)) OR
-                            (dp.load_dttm > (SELECT COALESCE(MAX(load_dttm),'1900-01-01') FROM dwh.load_dates_customer_report_datamart))
+                LEFT JOIN marts.customer_report_datamart crd ON dcs.customer_id = crd.customer_id
+                    WHERE (fo.load_dttm > (SELECT COALESCE(MAX(load_dttm),'1900-01-01') FROM marts.load_dates_customer_report_datamart)) OR
+                            (dc.load_dttm > (SELECT COALESCE(MAX(load_dttm),'1900-01-01') FROM marts.load_dates_customer_report_datamart)) OR
+                            (dcs.load_dttm > (SELECT COALESCE(MAX(load_dttm),'1900-01-01') FROM marts.load_dates_customer_report_datamart)) OR
+                            (dp.load_dttm > (SELECT COALESCE(MAX(load_dttm),'1900-01-01') FROM marts.load_dates_customer_report_datamart))
 ),
 dwh_update_delta AS ( -- делаем выборку заказчиков, по которым были изменения в DWH. По этим заказчикам данные в витрине нужно будет обновить
     SELECT     
@@ -200,7 +202,7 @@ dwh_delta_update_result AS ( -- делаем перерасчёт для сущ�
                 ) AS T4 WHERE T4.rank_count_craftsman = 1 ORDER BY report_period -- условие отбирает самого популярного мастера у заказчика
 ),
 insert_delta AS ( -- выполняем insert новых расчитанных данных для витрины 
-    INSERT INTO dwh.customer_report_datamart (
+    INSERT INTO marts.customer_report_datamart (
         customer_id,
         customer_name,
         customer_address,
@@ -239,7 +241,7 @@ insert_delta AS ( -- выполняем insert новых расчитанных
             FROM dwh_delta_insert_result
 ),
 update_delta AS ( -- выполняем обновление показателей в отчёте по уже существующим заказчикам
-    UPDATE dwh.customer_report_datamart SET
+    UPDATE marts.customer_report_datamart SET
         customer_name = updates.customer_name, 
         customer_address = updates.customer_address, 
         customer_birthday = updates.customer_birthday, 
@@ -276,10 +278,10 @@ update_delta AS ( -- выполняем обновление показател�
             count_order_not_done,
             report_period 
             FROM dwh_delta_update_result) AS updates
-    WHERE dwh.customer_report_datamart.customer_id = updates.customer_id
+    WHERE marts.customer_report_datamart.customer_id = updates.customer_id
 ),
 insert_load_date AS ( -- делаем запись в таблицу загрузок о том, когда была совершена загрузка, чтобы в следующий раз взять данные, которые будут добавлены или изменены после этой даты
-    INSERT INTO dwh.load_dates_customer_report_datamart (
+    INSERT INTO marts.load_dates_customer_report_datamart (
         load_dttm
     )
     SELECT GREATEST(COALESCE(MAX(craftsman_load_dttm), NOW()), 

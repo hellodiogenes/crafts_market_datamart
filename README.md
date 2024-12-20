@@ -2,7 +2,7 @@
 
 In this project, I worked with a database for a handmade goods marketplace. Initially, the database consisted of two main layers: sources and DWH. The sources were represented by three schemas: `source1`, `source2`, and `source3`. Data from these sources is loaded into the DWH layer using the **DDL_craft_market_dwh** script.
 
-The DWH layer contains dimension tables for craftsmen (`d_craftsman`), customers (`d_customer`), and products (`d_product`).
+The DWH layer contains dimension tables for craftsmen (`d_craftsman`), customers (`d_customer`), products (`d_product`), and orders fact table (`f_order`).
 
 The marketplace decided to integrate the client and craftsman databases from another online store. After completing the integration, it became necessary to create a data mart with customer information in a new layer of the database.
 

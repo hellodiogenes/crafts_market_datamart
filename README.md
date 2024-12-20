@@ -21,3 +21,15 @@ I faced two primary tasks:
    The SQL_craft_market_customers_datamart script was written to extract data from all warehouse tables. The data mart should be updated incrementally, meaning it only updates newly added or modified customer records since the last update.
 
    Before creating the data mart, a new marts schema was created to store data marts in the new database layer.
+
+## Technologies Used
+
+For the implementation of this data engineering project, I used *PostgreSQL* and Database Administration Tool *DBeaver*.
+
+## Results
+
+1. The **DDL_craft_market_dwh script** takes into account the `external_source` when updating the Data Warehouse (DWH), ensuring the data remains up-to-date and minimizing the risk of data loss.
+
+2. The **customer_report_datamart** was designed within the `marts` schema. To track the last update date of the datamart, a supporting table named `load_dates_customer_report_datamart` was created to store information about the most recent data refresh.
+
+3. The **SQL_craft_market_customers_datamart script** is responsible for aggregating customer data into the datamart. Updates are performed incrementally: the script checks the latest load date from the `load_dates_customer_report_datamart` table and only adds new records since the previous update. This approach reduces system load and speeds up data processing.

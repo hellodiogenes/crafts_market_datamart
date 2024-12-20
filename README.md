@@ -1,4 +1,4 @@
-# Key Tasks
+# Adding a new source to DWH. Creating a data mart with incremental data loading.
 
 In this project, I worked with a database for a handmade goods marketplace. Initially, the database consisted of two main layers: sources and DWH (Data Warehouse). The sources were represented by three schemas: source1, source2, and source3. Data from these sources is loaded into the DWH layer using the DDL_craft_market_dwh script.
 
@@ -14,7 +14,7 @@ I faced two primary tasks:
 
    Originally, the DDL_craft_market_dwh script extracted data from three source schemas: source1, source2, and source3. Now, it was required that DWH also receive data from an external schema called external_source.
 
-   Similar to source1, source2, and source3, the external_source schema contains data about buyers, sellers, and orders. Here is ![external_source diagramma](https://github.com/hellodiogenes/crafts_market_datamart/tree/main/image/external_source.png) for example.
+   Similar to source1, source2, and source3, the external_source schema contains data about buyers, sellers, and orders. Here is [external_source diagramma](https://github.com/hellodiogenes/crafts_market_datamart/tree/main/image/external_source.png) for example.
 
 2. Creating a script to generate an incremental data mart with customer data
 

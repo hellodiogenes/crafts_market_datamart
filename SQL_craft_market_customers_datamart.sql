@@ -1,4 +1,6 @@
---CREATE SCHEMA marts;
+--/*
+-- Создаем слой для витрин данных
+CREATE SCHEMA marts;
 
 -- DDL витрины данных
 DROP TABLE IF EXISTS marts.customer_report_datamart;
@@ -33,6 +35,7 @@ CREATE TABLE IF NOT EXISTS marts.load_dates_customer_report_datamart (
     load_dttm DATE NOT NULL,
     CONSTRAINT load_dates_customer_report_datamart_pk PRIMARY KEY (id)
 );
+*/
 
 WITH
 dwh_delta AS ( -- определяем, какие данные были изменены в витрине или добавлены в DWH. Формируем дельту изменений

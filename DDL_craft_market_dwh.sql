@@ -1,4 +1,4 @@
-/* создание таблицы tmp_sources с данными из всех источников */
+/* Creating a relation tmp_sources with data from all sources (source1, source2, source3), including external_source. */
 DROP TABLE IF EXISTS tmp_sources;
 CREATE TEMPORARY TABLE tmp_sources AS 
 SELECT  order_id,
@@ -66,7 +66,7 @@ SELECT  t1.order_id,
   FROM source3.craft_market_orders t1
     JOIN source3.craft_market_craftsmans t2 ON t1.craftsman_id = t2.craftsman_id 
     JOIN source3.craft_market_customers t3 ON t1.customer_id = t3.customer_id
-UNION -- соединяем 1, 2 и 3 источники с external_source
+UNION -- Union sources 1, 2, and 3 with external_source
 SELECT  t1.order_id,
         t1.order_created_date,
         t1.order_completion_date,
@@ -89,7 +89,7 @@ SELECT  t1.order_id,
   FROM external_source.craft_products_orders t1
     JOIN external_source.customers t2 ON t1.customer_id=t2.customer_id;
 
-/* обновление существующих записей и добавление новых в dwh.d_craftsmans */
+/* Updating existing entries and adding new ones to dwh.d_craftsmans */
 MERGE INTO dwh.d_craftsman d
 USING (SELECT DISTINCT craftsman_name, craftsman_address, craftsman_birthday, craftsman_email FROM tmp_sources) t
 ON d.craftsman_name = t.craftsman_name AND d.craftsman_email = t.craftsman_email
@@ -100,7 +100,7 @@ WHEN NOT MATCHED THEN
   INSERT (craftsman_name, craftsman_address, craftsman_birthday, craftsman_email, load_dttm)
   VALUES (t.craftsman_name, t.craftsman_address, t.craftsman_birthday, t.craftsman_email, current_timestamp);
 
-/* обновление существующих записей и добавление новых в dwh.d_products */
+/* Updating existing entries and adding new ones to dwh.d_products */
 MERGE INTO dwh.d_product d
 USING (SELECT DISTINCT product_name, product_description, product_type, product_price from tmp_sources) t
 ON d.product_name = t.product_name AND d.product_description = t.product_description AND d.product_price = t.product_price
@@ -110,7 +110,7 @@ WHEN NOT MATCHED THEN
   INSERT (product_name, product_description, product_type, product_price, load_dttm)
   VALUES (t.product_name, t.product_description, t.product_type, t.product_price, current_timestamp);
 
-/* обновление существующих записей и добавление новых в dwh.d_customer */
+/* Updating existing entries and adding new ones to dwh.d_customer */
 MERGE INTO dwh.d_customer d
 USING (SELECT DISTINCT customer_name, customer_address, customer_birthday, customer_email from tmp_sources) t
 ON d.customer_name = t.customer_name AND d.customer_email = t.customer_email
@@ -121,7 +121,7 @@ WHEN NOT MATCHED THEN
   INSERT (customer_name, customer_address, customer_birthday, customer_email, load_dttm)
   VALUES (t.customer_name, t.customer_address, t.customer_birthday, t.customer_email, current_timestamp);
 
-/* создание таблицы tmp_sources_fact */
+/* Creating a relation tmp_sources_fact */
 DROP TABLE IF EXISTS tmp_sources_fact;
 CREATE TEMP TABLE tmp_sources_fact AS 
 SELECT  dp.product_id,
@@ -136,7 +136,7 @@ JOIN dwh.d_craftsman dc ON dc.craftsman_name = src.craftsman_name and dc.craftsm
 JOIN dwh.d_customer dcust ON dcust.customer_name = src.customer_name and dcust.customer_email = src.customer_email 
 JOIN dwh.d_product dp ON dp.product_name = src.product_name and dp.product_description = src.product_description and dp.product_price = src.product_price;
 
-/* обновление существующих записей и добавление новых в dwh.f_order */
+/* Updating existing entries and adding new ones to dwh.f_order */
 MERGE INTO dwh.f_order f
 USING #tmp_sources_fact t
 ON f.product_id = t.product_id AND f.craftsman_id = t.craftsman_id AND f.customer_id = t.customer_id AND f.order_created_date = t.order_created_date 

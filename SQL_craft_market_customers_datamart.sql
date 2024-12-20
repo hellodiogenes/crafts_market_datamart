@@ -1,5 +1,5 @@
 WITH
-dwh_delta AS ( -- определяем, какие данные были изменены в витрине или добавлены в DWH. Формируем дельту изменений
+dwh_delta AS ( -- We determine what data was changed in the mart or added to the DWH after the last mart update. We form a delta of changes
     SELECT     
             dcs.customer_id AS customer_id,
             dcs.customer_name AS customer_name,
@@ -11,8 +11,8 @@ dwh_delta AS ( -- определяем, какие данные были изм�
             fo.order_id AS order_id,
             dp.product_id AS product_id,
             dp.product_price AS product_price,
-            dp.product_type AS product_type,
-            fo.order_completion_date - fo.order_created_date AS diff_order_date, -- разница между датой создания заказа и его завершением
+            dp.product_type AS product_type, 
+            fo.order_completion_date - fo.order_created_date AS diff_order_date, -- The difference between the date of order creation and its completion
             fo.order_status AS order_status,
             TO_CHAR(fo.order_created_date, 'yyyy-mm') AS report_period,
             crd.customer_id AS exist_customer_id,
@@ -29,13 +29,13 @@ dwh_delta AS ( -- определяем, какие данные были изм�
                             (dcs.load_dttm > (SELECT COALESCE(MAX(load_dttm),'1900-01-01') FROM marts.load_dates_customer_report_datamart)) OR
                             (dp.load_dttm > (SELECT COALESCE(MAX(load_dttm),'1900-01-01') FROM marts.load_dates_customer_report_datamart))
 ),
-dwh_update_delta AS ( -- делаем выборку заказчиков, по которым были изменения в DWH. По этим заказчикам данные в витрине нужно будет обновить
+dwh_update_delta AS ( -- We make a sample of customers with updated data
     SELECT     
             dd.exist_customer_id AS customer_id
             FROM dwh_delta dd 
                 WHERE dd.exist_customer_id IS NOT NULL        
 ),
-dwh_delta_insert_result AS ( -- делаем расчёт витрины по новым данным. Этой информации по заказчикам в рамках расчётного периода раньше не было, это новые данные. 
+dwh_delta_insert_result AS ( -- These customers were not available before, this is new data. 
     SELECT  
             T4.customer_id AS customer_id,
             T4.customer_name AS customer_name,
@@ -55,9 +55,9 @@ dwh_delta_insert_result AS ( -- делаем расчёт витрины по н
             T4.count_order_not_done AS count_order_not_done,
             T4.report_period AS report_period 
             FROM (
-                SELECT     -- в этой выборке объединяем две внутренние выборки по расчёту столбцов витрины. 
+                SELECT
                         *,
-                        ROW_NUMBER () OVER(PARTITION BY T2.customer_id ORDER BY count_craftsman DESC) AS rank_count_craftsman -- нужно для отбора самого популярного мастера у заказчика
+                        ROW_NUMBER () OVER(PARTITION BY T2.customer_id ORDER BY count_craftsman DESC) AS rank_count_craftsman -- Using window function to choose the most popular craftman for each customer
                         FROM ( 
                             SELECT
                                 T1.customer_id AS customer_id,
@@ -81,7 +81,7 @@ dwh_delta_insert_result AS ( -- делаем расчёт витрины по н
                                         GROUP BY T1.customer_id, T1.customer_name, T1.customer_address, T1.customer_birthday, T1.customer_email, T1.report_period
                             ) AS T2 
                                 INNER JOIN (
-                                    SELECT     -- Здесь опредеяется самый поплярный мастер у заказчика.
+                                    SELECT     -- Here we determine the most popular craftsman for each customer
                                             dd.customer_id AS customer_id_for_craftsman_name, 
                                             dd.craftsman_id,
                                             dd.craftsman_name,
@@ -89,9 +89,9 @@ dwh_delta_insert_result AS ( -- делаем расчёт витрины по н
                                             FROM dwh_delta AS dd
                                                 GROUP BY dd.customer_id, dd.craftsman_id, dd.craftsman_name
                                                     ORDER BY count_craftsman DESC) AS T3 ON T2.customer_id = T3.customer_id_for_craftsman_name
-                ) AS T4 WHERE T4.rank_count_craftsman = 1 ORDER BY report_period -- условие отбирает самого популярного мастера у заказчика
+                ) AS T4 WHERE T4.rank_count_craftsman = 1 ORDER BY report_period -- WHERE determines the most popular craftman for each customer
 ),
-dwh_delta_update_result AS ( -- делаем перерасчёт для существующих записей витринs, по которым есть обновления
+dwh_delta_update_result AS ( -- We recalculate existing data mart's records for which there are updates
     SELECT 
 			T4.customer_id AS customer_id,
             T4.customer_name AS customer_name,
@@ -113,7 +113,7 @@ dwh_delta_update_result AS ( -- делаем перерасчёт для сущ�
             FROM (
                 SELECT     
                         *,
-                        ROW_NUMBER () OVER(PARTITION BY T2.customer_id ORDER BY count_craftsman DESC) AS rank_count_craftsman -- нужно для отбора самого популярного мастера у заказчика 
+                        ROW_NUMBER () OVER(PARTITION BY T2.customer_id ORDER BY count_craftsman DESC) AS rank_count_craftsman -- Using window function to choose the most popular craftman for each customer 
                         FROM (
                             SELECT 
                                 T1.customer_id AS customer_id,
@@ -133,7 +133,7 @@ dwh_delta_update_result AS ( -- делаем перерасчёт для сущ�
                                 SUM(CASE WHEN T1.order_status != 'done' THEN 1 ELSE 0 END) AS count_order_not_done,
                                 T1.report_period AS report_period
                                 FROM (
-                                    SELECT     -- в этой выборке достаём из DWH обновлённые или новые данные по мастерам, которые уже есть в витрине
+                                    SELECT     -- Here we take out of the DWH updated data about the most popular craftman for each customer, that is already mentioned in the mart
                                             dcs.customer_id AS customer_id,
                                             dcs.customer_name AS customer_name,
                                             dcs.customer_address AS customer_address,
@@ -155,7 +155,7 @@ dwh_delta_update_result AS ( -- делаем перерасчёт для сущ�
                                     GROUP BY T1.customer_id, T1.customer_name, T1.customer_address, T1.customer_birthday, T1.customer_email, T1.report_period
                             ) AS T2 
                                 INNER JOIN (
-                                    SELECT     -- Здесь опредеяется самый поплярный мастер у заказчика.
+                                    SELECT     -- Here we determine the most popular craftsman for each customer
                                             dd.customer_id AS customer_id_for_craftsman_name, 
                                             dd.craftsman_id,
                                             dd.craftsman_name,
@@ -163,9 +163,9 @@ dwh_delta_update_result AS ( -- делаем перерасчёт для сущ�
                                             FROM dwh_delta AS dd
                                                 GROUP BY dd.customer_id, dd.craftsman_id, dd.craftsman_name
                                                     ORDER BY count_craftsman DESC) AS T3 ON T2.customer_id = T3.customer_id_for_craftsman_name
-                ) AS T4 WHERE T4.rank_count_craftsman = 1 ORDER BY report_period -- условие отбирает самого популярного мастера у заказчика
+                ) AS T4 WHERE T4.rank_count_craftsman = 1 ORDER BY report_period -- WHERE determines the most popular craftman for each customer
 ),
-insert_delta AS ( -- выполняем insert новых расчитанных данных для витрины 
+insert_delta AS ( -- Inserting new data in the datamart
     INSERT INTO marts.customer_report_datamart (
         customer_id,
         customer_name,
@@ -204,7 +204,7 @@ insert_delta AS ( -- выполняем insert новых расчитанных
             report_period 
             FROM dwh_delta_insert_result
 ),
-update_delta AS ( -- выполняем обновление показателей в отчёте по уже существующим заказчикам
+update_delta AS ( -- Updating data for existing customers
     UPDATE marts.customer_report_datamart SET
         customer_name = updates.customer_name, 
         customer_address = updates.customer_address, 
@@ -244,7 +244,7 @@ update_delta AS ( -- выполняем обновление показател�
             FROM dwh_delta_update_result) AS updates
     WHERE marts.customer_report_datamart.customer_id = updates.customer_id
 ),
-insert_load_date AS ( -- делаем запись в таблицу загрузок о том, когда была совершена загрузка, чтобы в следующий раз взять данные, которые будут добавлены или изменены после этой даты
+insert_load_date AS ( -- We make a record in the support table about when the download was made, so that next time we can take data that will be added or changed after this date
     INSERT INTO marts.load_dates_customer_report_datamart (
         load_dttm
     )
@@ -253,4 +253,4 @@ insert_load_date AS ( -- делаем запись в таблицу загру�
                     COALESCE(MAX(products_load_dttm), NOW())) 
         FROM dwh_delta
 )
-SELECT 'increment datamart'; -- инициализируем запрос CTE
+SELECT 'increment datamart'; -- Initialize CTE

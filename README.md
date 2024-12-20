@@ -18,9 +18,9 @@ I faced two primary tasks:
 
 2. Creating a script to generate an incremental data mart with customer data
 
-   The **SQL_craft_market_customers_datamart** script was written to extract data from all warehouse tables. The data mart should be updated incrementally, meaning it only updates newly added or modified customer records since the last update.
+   The **SQL_craft_market_customers_datamart** script was written to extract data from DWH layer. The data mart should be updated incrementally, meaning it only updates newly added or modified customer records since the last update.
 
-   Before creating the data mart, a new marts schema was created to store data marts in the new database layer.
+   Before creating the data mart, the `marts` schema was created to store future data marts.
 
 ## Technologies Used
 

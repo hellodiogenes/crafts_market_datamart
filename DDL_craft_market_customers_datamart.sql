@@ -1,32 +1,32 @@
--- Создаем слой для витрин данных
+-- Creating a special layer for data marts
 CREATE SCHEMA marts;
 
--- DDL витрины данных
+-- DDL of the data mart
 DROP TABLE IF EXISTS marts.customer_report_datamart;
 
 CREATE TABLE IF NOT EXISTS marts.customer_report_datamart (
-    id BIGINT GENERATED ALWAYS AS IDENTITY NOT NULL, -- идентификатор записи
-    customer_id BIGINT NOT NULL, -- идентификатор заказчика
-    customer_name VARCHAR NOT NULL, -- Ф.И.О. заказчика
-    customer_address VARCHAR NOT NULL, -- адрес заказчика
-    customer_birthday DATE NOT NULL, -- дата рождения заказчика
-    customer_email VARCHAR NOT NULL, -- электронная почта заказчика
-    customer_expenses NUMERIC(15,2) NOT NULL, -- сумма, которую потратил заказчик (-10% на платформы)
-    platform_money BIGINT NOT NULL, -- сумма, которую заработала платформа от покупок заказчика за месяц
-    count_order BIGINT NOT NULL, -- количество заказов у заказчика за месяц
-    avg_price_order NUMERIC(10,2) NOT NULL, -- средняя стоимость одного заказа у заказчика за месяц
-    median_time_order_completed NUMERIC(10,1), -- медианное время в днях от момента создания заказа до его завершения за месяц
-    top_master VARCHAR NOT NULL, -- самый популярный мастер у этого заказчика (если заказчик сделал одинаковое кол-во заказов у разных мастеров -> взять любого)
-    count_order_created BIGINT NOT NULL, -- количество созданных заказов за месяц
-    count_order_in_progress BIGINT NOT NULL, -- количество заказов в процессе изготовки за месяц
-    count_order_delivery BIGINT NOT NULL, -- количество заказов в доставке за месяц
-    count_order_done BIGINT NOT NULL, -- количество завершённых заказов за месяц
-    count_order_not_done BIGINT NOT NULL, -- количество незавершённых заказов за месяц
-    report_period VARCHAR NOT NULL, -- отчётный период год и месяц
+    id BIGINT GENERATED ALWAYS AS IDENTITY NOT NULL, -- record identifier
+    customer_id BIGINT NOT NULL, -- customer ID
+    customer_name VARCHAR NOT NULL, -- customer full name
+    customer_address VARCHAR NOT NULL, -- customer address
+    customer_birthday DATE NOT NULL, -- customer birth date
+    customer_email VARCHAR NOT NULL, -- customer email
+    customer_expenses NUMERIC(15,2) NOT NULL, -- amount spent by the customer (-10% on platforms)
+    platform_money BIGINT NOT NULL, -- amount earned by the platform from customer purchases per month
+    count_order BIGINT NOT NULL, -- number of orders placed by the customer in a month
+    avg_price_order NUMERIC(10,2) NOT NULL, -- average cost of one order for the customer in a month
+    median_time_order_completed NUMERIC(10,1), -- median time in days from order creation to completion within a month
+    top_master VARCHAR NOT NULL, -- most popular master for this customer (if the customer has made an equal number of orders with different masters -> take any)
+    count_order_created BIGINT NOT NULL, -- number of orders created in a month
+    count_order_in_progress BIGINT NOT NULL, -- number of orders in progress during a month
+    count_order_delivery BIGINT NOT NULL, -- number of orders in delivery during a month
+    count_order_done BIGINT NOT NULL, -- number of completed orders in a month
+    count_order_not_done BIGINT NOT NULL, -- number of uncompleted orders in a month
+    report_period VARCHAR NOT NULL, -- reporting period year and month
     CONSTRAINT customer_report_datamart_pk PRIMARY KEY (id)
 );
 
--- DDL таблицы инкрементальных загрузок
+-- DDL table for incremental loads
 DROP TABLE IF EXISTS marts.load_dates_customer_report_datamart;
 
 CREATE TABLE IF NOT EXISTS marts.load_dates_customer_report_datamart (

@@ -16,7 +16,7 @@ I faced two primary tasks:
 
    Similar to source1, source2, and source3, the external_source schema contains data about buyers, sellers, and orders:
 
-   [Image alt](https://github.com/hellodiogenes/crafts_market_datamart/raw/master/image/external_source.jpg)
+   [Image alt](https://github.com/hellodiogenes/crafts_market_datamart/tree/main/image/external_source.jpg)
 
 2. Creating a script to generate an incremental data mart with customer data
 

@@ -4,7 +4,7 @@ In this project, I worked with a database for a handmade goods marketplace. Init
 
 The DWH layer contains dimension tables for craftsmen (d_craftsman), customers (d_customer), and products (d_product).
 
-The marketplace decided to integrate the client and artisan databases from another online store. After completing the integration, it became necessary to create a data mart with customer information in a new layer of the database.
+The marketplace decided to integrate the client and craftsman databases from another online store. After completing the integration, it became necessary to create a data mart with customer information in a new layer of the database.
 
 ## Key Tasks
 
@@ -14,7 +14,9 @@ I faced two primary tasks:
 
    Originally, the DDL_craft_market_dwh script extracted data from three source schemas: source1, source2, and source3. Now, it was required that DWH also receive data from an external schema called external_source.
 
-   Similar to source1, source2, and source3, the external_source schema contains data about buyers, sellers, and orders.
+   Similar to source1, source2, and source3, the external_source schema contains data about buyers, sellers, and orders:
+
+   [Image alt](https://github.com/hellodiogenes/crafts_market_datamart/raw/master/image/external_source.jpg)
 
 2. Creating a script to generate an incremental data mart with customer data
 
